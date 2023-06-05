@@ -619,27 +619,159 @@ We Just have many Local minimum,Such as:
 
 - So,we use a better function for Logistic Regression:
   $$
-  loss(f_{\vec w,b}(\bold X^{(i)},y^{(i)}))= 
+  \begin{align}
+  &loss(f_{\vec w,b}(\bold X^{(i)},y^{(i)}))= 
   \left \{
   \begin{array} {align}
-  &-log(f_{\vec w,b}(\vec x^{(i)})) &if  \space y^{(i)}=1
+  &-\log(f_{\vec w,b}(\vec x^{(i)})) &if  \space y^{(i)}=1
   \\
-  &log(1-f_{\vec w,b}(\vec x^{(i)}))&if \space y^{(i)}=0
+  &\log(1-f_{\vec w,b}(\vec x^{(i)}))&if \space y^{(i)}=0
   \end{array}
   \right.
+  \\
+  &we \space simpplify \space this \space equation \space causing \space y \space only \space can \space get \space 1 \space or \space 0: 
+  \\
+  &loss(f_{\vec w,b}(\bold X^{(i)},y^{(i)}))= -(y^{(i)}\log f_{\vec w,b}(\bold X^{(i)}))-(1-y^{(i)})\log (1-f_{\vec w,b}(\bold X^{(i)}))
+  \end{align}
   $$
 
 
 
+- where $f_{\vec w,b}(\bold x^{(i)})=g(\vec w \cdot \vec x^{(i)}+b)=\frac{1}{1+e^{-(\vec w \cdot \vec x +b)}}$ 
 
+- Its figures of cost function:
 
+  ![img](./Machine_Learning.assets/Logistic_cost_function.png)
 
+- Its figure about $\vec w,b$,as follwing:
 
+![](./Machine_Learning.assets/Logist_Cost_of_w,b.png)
 
+- It avoids local minnimum,when we use Gradient Descent,we can get good result.
 
+- **Thing about why using this function for myself !** (Tips:about maximum likelihood estimation(最大似然估计))
 
+- Eventually,Cost Function is:
+  $$
+  \begin{align}
+  J(w,b)&=\frac{1}{m}\sum^{m-1}_{i=0}[loss(f_{\vec w,b}(\bold x^{(i)}),y^{(i)})]
+  \\&=-\frac{1}{m}\sum^{m-1}_{i=0}(y^{(i)}\log f_{\vec w,b}(\bold X^{(i)}))+(1-y^{(i)})\log (1-f_{\vec w,b}(\bold X^{(i)}))
+  \end{align}
+  $$
+  where  $loss(f_{\vec w,b}(\bold X^{(i)},y^{(i)}))= -(y^{(i)}\log f_{\vec w,b}(\bold X^{(i)}))-(1-y^{(i)})\log (1-f_{\vec w,b}(\bold X^{(i)}))$,m is number of training examples.
 
+- Code:
 
+  ```python
+  def sigmoid(z):
+      z = np.clip( z, -500, 500 )           # protect against overflow
+      """
+      np.clip: 将z的值限定在最大、最小值中
+      """
+      g = 1.0/(1.0+np.exp(-z))
+      
+      return g
+  
+  def compute_cost_logistic(X, y, w, b):
+      m = X.shape[0]
+      cost = 0.0
+      for i in range(m):
+          z_i = np.dot(X[i],w) + b
+          f_wb_i = sigmoid(z_i)
+          cost +=  -y[i]*np.log(f_wb_i) - (1-y[i])*np.log(1-f_wb_i)
+               
+      cost = cost / m
+      return cost
+  ```
+
+### (4)Gradient Descent
+
+Recall the gradient descent in the Linear Regression:
+$$
+\begin{align}
+&repeat \space until \space convergence:\{
+\\
+& w_j=w_j-\alpha \frac{\partial J(w,b)}{\part w_j} &for\space j=0..n-1
+\\&b =b-\alpha \frac{\partial J(w,b)}{\part b}
+\\&\}
+\end{align}
+$$
+where each iteration updates $w_j,b$ for all $j$,where
+$$
+\frac{\partial{J(w,b)}}{\partial w}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})x^{(i)}
+$$
+
+$$
+\frac{\partial{J(w,b)}}{\partial b}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})
+$$
+
+Notice that:
+
+- it's similar to Linear Regression's gradient function,we can verify it by myself.
+
+- Some differentiation:
+
+- $$
+  \begin{align}
+  f_{w,b}(x^{(i)})&=g(z)
+  \\
+  &=\frac{1}{1+e^{-z}} &(z=w \cdot x+b)
+  
+  \end{align}
+  $$
+
+- Code:
+
+  ```python
+  def sigmoid(z):
+      z = np.clip( z, -500, 500 )           # protect against overflow
+      """
+      np.clip: 将z的值限定在最大、最小值中
+      """
+      g = 1.0/(1.0+np.exp(-z))
+      
+      return g
+  
+  def compute_gradient_logistic(X, y, w, b): 
+      m,n = X.shape
+      dj_dw = np.zeros((n,))                           #(n,)
+      dj_db = 0.
+  
+      for i in range(m):
+          f_wb_i = sigmoid(np.dot(X[i],w) + b)          #(n,)(n,)=scalar  
+          #计算 f,自己模型预测值
+          err_i  = f_wb_i  - y[i]                       #scalar
+          for j in range(n):
+              dj_dw[j] = dj_dw[j] + err_i * X[i,j]      #scalar
+          dj_db = dj_db + err_i
+      dj_dw = dj_dw/m                                   #(n,)
+      dj_db = dj_db/m                                   #scalar
+          
+      return dj_db, dj_dw  
+  
+  def gradient_descent(X, y, w_in, b_in, alpha, num_iters): 
+      J_history = []
+      w = copy.deepcopy(w_in)  #avoid modifying global w within function
+      b = b_in
+      
+      for i in range(num_iters):
+          # Calculate the gradient and update the parameters
+          dj_db, dj_dw = compute_gradient_logistic(X, y, w, b)   
+  
+          # Update Parameters using w, b, alpha and gradient
+          w = w - alpha * dj_dw               
+          b = b - alpha * dj_db               
+        
+          # Save cost J at each iteration
+          if i<100000:      # prevent resource exhaustion 
+              J_history.append( compute_cost_logistic(X, y, w, b) )
+  
+          # Print cost every at intervals 10 times or as many iterations if < 10
+          if i% math.ceil(num_iters / 10) == 0:
+              print(f"Iteration {i:4d}: Cost {J_history[-1]}   ")
+          
+      return w, b, J_history         #return final w,b and J history for graphing
+  ```
 
 
 
