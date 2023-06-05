@@ -2,7 +2,7 @@
 
 # 1. Supervised learning
 
-## 1.1 Liner Regression Model(线性回归)
+## 1.1 Linear Regression Model(线性回归)
 
 ### (1) The model function
 
@@ -24,6 +24,7 @@ def predict(x,w,b):
 
 ### (2) Cost Function
 
+**Squared error cost:**
 $$
 J(w,b)=\frac{1}{2m}\sum^{m-1}_{i=0}({f_{w,b}(x^{(i)})-y^{(i)})}^2
 $$
@@ -523,10 +524,127 @@ $$
 
 ![](./Machine_Learning.assets/sklearn_result.png)
 
+## 1.4 Logistic Regression
+
+- Almost used in Classification,Our actual question is:
+
+<table>
+    <tr>
+        <td>Question</td>
+        <td colspan="2">Answer"y"</td>
+    <tr>
+    <tr>
+        <td>Is the email spam?</td>
+        <td>yes(1)</td>
+        <td>No(0)</td>
+    <tr>    
+</table>
+
+- Some Example:
+  ![img](./Machine_Learning.assets/Example_of_Logistic.png)
+
+**If we still use Liner Regression to fit these data, we will get:**
+
+![img](./Machine_Learning.assets/Example_result_1.png)
+
+Vissablely,the reslut is not good for our actual problem.So,we must use some tool to deal with this problem.
+
+We introduce some tool:
+
+### (1) sigmoid function
+
+$$
+g = \frac{1}{1+e^{-Z}}
+$$
+
+- Its image of g(Z):
+
+  ![img](./Machine_Learning.assets/Sigmoid_Image.png)
+
+As you can see,it has a great effect on Classfing 1 to 0 that  it has same probability to 0 or 1. 
+
+- A lgistic regression can applies sigmoid to the Linear Regression:
+  $$
+  f_{\vec w,b} = g(\vec w \cdot \vec x^{(i)}+b)
+  $$
+  where 
+  $$
+  z = \vec w \cdot \vec x^{(i)}+b
+   \\
+   g(z) = \frac{1}{1+e^{-z}}
+  $$
+
+- Eventually,our Function is：
+  $$
+  f_{\vec w,b}=\frac{1}{1+e^{-(\vec w \cdot \vec x \space + \space b)}}
+  $$
+  
+
+### (2) Decision Boundaries
+
+- As using sigmoid function,we can easily see,$g(z)>=0.5$,for $z>=0$
+
+- In linear regression,$z=\vec w \cdot \vec x+b$,So that:
+
+  If $\vec w \cdot \vec x +b>=0$,the model predicts $ y =1 $
+
+  If$\vec w \cdot \vec x +b<0$,the model predicts $y =0$
+
+- So we Let $\vec w \cdot \vec x +b=0$,we can get the Decison Boundaries.
+
+**A simple : **
+
+- Our Logistic regression model has the form
+  $$
+  f(x)=g(-3+x_0+x_1)
+  $$
+
+- we make $-3+x_0+x_1=0$,our boundaries is $x_0+x_1=3$,as folliowing figures:
+
+  ![img](./Machine_Learning.assets/Sample_Decison_Boundaries.png)
+
+### (3) Cost Function
+
+- If we still use Squared error for Lgistic Regression:
+
+$$
+J(w,b)=\frac{1}{2m}\sum^{m-1}_{i=0}({f_{w,b}(x^{(i)})-y^{(i)})}^2
+$$
+
+We Just have many Local minimum,Such as:
+
+
+
+![Squared_error_for_Logistic](./Machine_Learning.assets/Squared_error_for_Logistic.png)
+
+- So,we use a better function for Logistic Regression:
+  $$
+  loss(f_{\vec w,b}(\bold X^{(i)},y^{(i)}))= 
+  \left \{
+  \begin{array} {align}
+  &-log(f_{\vec w,b}(\vec x^{(i)})) &if  \space y^{(i)}=1
+  \\
+  &log(1-f_{\vec w,b}(\vec x^{(i)}))&if \space y^{(i)}=0
+  \end{array}
+  \right.
+  $$
 
 
 
 
-# 2. Unsupervised learning
+
+
+
+
+
+
+
+
+
+
+
+
+
+# 2. Unsuperised learning
 
  	
