@@ -344,7 +344,7 @@ $$
 - less weight value implies less important/correct feature, and in extreme, when the weight becomes zero or very close to zero, the associated feature useful in fitting the model to the data.
 - above, after fitting, the weight associated with the $x^2$ feature is much larger than the weights for $x$ or $x^3$ as it is the most useful in fitting the data.
 
-## 1.3 Linear Regression by using skLearn
+##  Linear Regression by using skLearn
 
 - MyDemo: 
 
@@ -772,6 +772,312 @@ Notice that:
           
       return w, b, J_history         #return final w,b and J history for graphing
   ```
+
+
+
+##  Sklearn for Logistic Regression
+
+- Using Sklearn Demo:
+
+  ```python
+  from sklearn.linear_model import LogisticRegression
+  import numpy as np
+  
+  x = np.array([[0.5,1.5],[1,1],[1.5,0.5],[3,0.5],[2,2],[1,2.5]])
+  y = np.array([0, 0, 0, 1, 1, 1])
+  
+  lr_model = LogisticRegression()
+  lr_model.fit(x,y)
+  y_pred = lr_model.predict(x)
+  print(f"Prediction on training set",y_pred)
+  print("Accuracy on training set:",lr_model.score(x,y))
+  print(f"sonme parmater:\n b:{lr_model.intercept_},w:{lr_model.coef_}")
+  ```
+
+- Result:
+
+  ![](./Machine_Learning.assets/Logistic_Sk_Res.png)
+
+- My Model Demo:
+
+  ```python
+  import copy
+  import math
+  
+  import numpy as np
+  
+  """
+  计算 g(z) = 1/1+e^(-z)
+  """
+  def sigmoid(z):
+      z = np.clip(z,-500,500)
+  
+      g = 1.0/(1.0+np.exp(-z))
+      return g
+  
+  """
+  计算损失函数
+  """
+  def compute_cost(X,y,w,b):
+      m = X.shape[0]
+      cost = 0.0
+      for i in range(m):
+          z_i = np.dot(X[i],w)+b
+          f_wb_i = sigmoid(z_i)
+          cost +=-y[i]*np.log(f_wb_i)-(1-y[i])*np.log(1-f_wb_i)
+  
+      cost = cost/m
+  
+      return cost
+  
+  """
+  梯度下降方法 计算偏导
+  """
+  def compute_gradient(X,y,w,b):
+      m,n = X.shape
+      dj_dw = np.zeros((n,))
+      dj_db = 0
+      for i in range(m): # 累加所有样本
+          f_wb_i = sigmoid(np.dot(x[i],w)+b) #计算自己模型的预测值
+          err_i = f_wb_i - y[i]
+          for j in range(n): # 计算每个特征
+              dj_dw[j] = dj_dw[j] + err_i * X[i,j]
+          dj_db = dj_db + err_i
+      #计算所有样本 最后除以 样本个数
+      dj_dw = dj_dw / m
+      dj_db = dj_db / m
+  
+      return dj_db,dj_dw
+  
+  """
+  计算 迭代后的参数
+  """
+  def gradient_descent(X, y, w_in, b_in, alpha, num_iters):
+      J_history = []
+      w = copy.deepcopy(w_in)
+      b = b_in
+  
+      for i in range(num_iters):
+          dj_db, dj_dw = compute_gradient(X,y,w,b)
+  
+          w = w - alpha * dj_dw
+          b = b - alpha * dj_db
+  
+          if i < 100000:
+              J_history.append(compute_gradient(X,y,w,b))
+              #记录每个损失函数的值，观察是否递减，以便调整alpha学习率
+              if i%math.ceil(num_iters/10) == 0:
+                  print(f"Iteration {i:4d}: Cost {J_history[-1]}   ")
+              # 打印
+  
+      return w,b,J_history
+  def prediction(X,w,b):
+      y = np.dot(X,w)+b
+      y = sigmoid(y)
+     # y[y < 0.5] = 0
+      #y[y >= 0.5] = 1
+      return y
+      #return np.ceil(y)
+  
+  
+  x = np.array([[0.5,1.5],[1,1],[1.5,0.5],[3,0.5],[2,2],[1,2.5]])
+  y = np.array([0, 0, 0, 1, 1, 1])
+  
+  w =np.array([0,0])
+  b = 0
+  alpha = 0.1
+  w,b,his = gradient_descent(x,y,w,b,alpha,10000)
+  print(w,b)
+  print(f"prediction for myselfL:{prediction(x,w,b)}")
+  ```
+
+- Result：
+
+  ![](./Machine_Learning.assets/My_Logistic_Res.png)
+
+- Causing the rule that if $y<0.5$,$y=0$,else$y=1$,So My model's result is also good. 
+
+## Regularzation to deal with problem of our model that overfiting
+
+When our model is too much complex,we can see the scense called overfiting,such as:
+
+ ![Sample_overfiting](./Machine_Learning.assets/Sample_overfiting.png)
+
+- Visably,it may be good for data,but not fit to actual use.Three methood is introduced:
+
+  - 1, Add more data
+
+  - 2, Find more important features
+
+    -Feature selection
+
+  - 3, Reduce size of paramaters
+
+    -"Regularization"
+
+### 1. Linear Regression introducing Regularzation
+
+we want  some less important features to closely vanish,so we just want our $w_j$ to be more smaller.
+
+We add a formula in our original cost function:
+$$
+\frac {\lambda}{2m}\sum_{j=0}^{n-1}w_j^2
+$$
+where $\lambda$ is similar to $\alpha$ ,is regularzation parameter.
+
+Noting:
+
+- we want $\lambda$ big but not too big,generally we make it be $1$.
+
+- The coefficient 2 is to make more smooth to be used in gradient descent
+
+- squared $w$ is to applied in Gradient Descent,when we use Gradient Descent,we make our $w$ to be more smaller.
+
+#### (1) Cost Function
+
+Eventually,Our cost function is:
+$$
+J(w,b)=\frac{1}{2m}\sum^{m-1}_{i=0}({f_{w,b}(x^{(i)})-y^{(i)})}^2+\frac {\lambda}{2m}\sum_{j=0}^{n-1}w_j^2
+$$
+
+- Code:
+
+  ```python
+  def compute_cost_linear_reg(X, y, w, b, lambda_ = 1):
+      m  = X.shape[0]
+      n  = len(w)
+      cost = 0.
+      for i in range(m):
+          f_wb_i = np.dot(X[i], w) + b             #(n,)(n,)=scalar, see np.dot
+          cost = cost + (f_wb_i - y[i])**2                               #scalar             
+      cost = cost / (2 * m)                                              #scalar  
+   
+      reg_cost = 0
+      for j in range(n):
+          reg_cost += (w[j]**2)                                          #scalar
+      reg_cost = (lambda_/(2*m)) * reg_cost                              #scalar
+      
+      total_cost = cost + reg_cost                                       #scalar
+      return total_cost                                                  #scalar
+  ```
+
+#### (2) Gradient Descent
+
+- we Just use original methood:
+
+$$
+\begin{align}
+&repeat \space until \space convergence:\{
+\\
+& w_j=w_j-\alpha \frac{\partial J(w,b)}{\part w_j} &for\space j=0..n-1
+\\&b =b-\alpha \frac{\partial J(w,b)}{\part b}
+\\&\}
+\end{align}
+$$
+
+now the $\frac{\partial J(w,b)}{\part w_j}$ and \frac{\partial J(w,b)}{\part b} is identically different: 
+$$
+\begin{align}
+&\frac{\partial{J(w,b)}}{\partial w}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})x^{(i)}+\frac{\lambda}{m}w_j
+\\ &\frac{\partial{J(w,b)}}{\partial b}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})
+\end{align}
+$$
+
+- Code:
+
+  ```python
+  def compute_gradient_linear_reg(X, y, w, b, lambda_): 
+      m,n = X.shape           #(number of examples, number of features)
+      dj_dw = np.zeros((n,))
+      dj_db = 0.
+  
+      for i in range(m):                             
+          err = (np.dot(X[i], w) + b) - y[i]                 
+          for j in range(n):                         
+              dj_dw[j] = dj_dw[j] + err * X[i, j]               
+          dj_db = dj_db + err                        
+      dj_dw = dj_dw / m                                
+      dj_db = dj_db / m   
+      
+      # regularzatiton
+      for j in range(n):
+          dj_dw[j] = dj_dw[j] + (lambda_/m) * w[j]
+  
+      return dj_db, dj_dw
+  ```
+
+  
+
+### 2. Logistic Regression introducing Regularzation
+
+#### (1) Cost function
+
+It is similar to above:
+$$
+J(\vec w,b)= -(y^{(i)}\log f_{\vec w,b}(\bold X^{(i)}))-(1-y^{(i)})\log (1-f_{\vec w,b}(\bold X^{(i)}))+\frac {\lambda}{2m}\sum_{j=0}^{n-1}w_j^2
+$$
+where
+$$
+\begin{align}
+f_{\vec w,b}(\vec x) &= sigmoid(\vec w \cdot \vec x^{(i)} +b)
+\\
+&=\frac {1}{1+e^{-(\vec w \cdot \vec x^{(i)} +b)}}
+\end{align}
+$$
+Just introducing $\frac {\lambda}{2m}\sum_{j=0}^{n-1}w_j^2$ in original function.
+
+#### (2) Gradient Descent
+
+$$
+\begin{align}
+&repeat \space until \space convergence:\{
+\\
+& w_j=w_j-\alpha \frac{\partial J(w,b)}{\part w_j} &for\space j=0..n-1
+\\&b =b-\alpha \frac{\partial J(w,b)}{\part b}
+\\&\}
+\end{align}
+$$
+
+where
+$$
+\begin{align}
+&\frac{\partial{J(w,b)}}{\partial w}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})x^{(i)}+\frac{\lambda}{m}w_j
+\\ &\frac{\partial{J(w,b)}}{\partial b}=\frac{1}{m}\sum_{i=0}^{m-1}(f_{w,b}(x^{(i)})-y^{(i)})
+\end{align}
+$$
+
+- Difference:
+  - $f_{\vec w,b}(x^{(i)})=\vec w \cdot \vec x+b$
+  - $z=\vec w \cdot \vec x+b$
+  - $g(z) = \frac {1}{1+e^{-z}}$
+
+- m is the number of training examples in the data set,$f_{\vec w,b}(x^{(i)})=\vec w \cdot \vec x+b$ is the model's prediction, while $y^{(i)}$is the target.
+
+- code:
+
+  ```python
+  def compute_gradient_linear_reg(X, y, w, b, lambda_): 
+      m,n = X.shape           #(number of examples, number of features)
+      dj_dw = np.zeros((n,))
+      dj_db = 0.
+  
+      for i in range(m):                             
+          err = (np.dot(X[i], w) + b) - y[i]                 
+          for j in range(n):                         
+              dj_dw[j] = dj_dw[j] + err * X[i, j]               
+          dj_db = dj_db + err                        
+      dj_dw = dj_dw / m                                
+      dj_db = dj_db / m   
+      
+      for j in range(n):
+          dj_dw[j] = dj_dw[j] + (lambda_/m) * w[j]
+  
+      return dj_db, dj_dw
+  ```
+  
+  
+
+
 
 
 
