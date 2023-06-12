@@ -1075,7 +1075,116 @@ $$
       return dj_db, dj_dw
   ```
   
+
+
+
+## Model Evaluation
+
+### (1) Set
+
+- we need "Training" and "Test" set
+  - if we don't have more Test set, we can spilt the original Training set to evaluate the model 
+
+- we just have a error function to evaluate our model and improve our model
+  - so we split original set to three set: Training,	Cross-validation(to improve model),	Test(evaluate model)
+
+- Somtimes,we just use some rate to do above:
+
+|              dat | % of data | Description                                                  |
+| ---------------: | :-------: | ------------------------------------------------------------ |
+|         training |    60     | Data used to tune model parameters w,b in training or fittingData |
+| cross-validation |    20     | Data used to tune other model parameters like degree of polynomial, regularization or the architecture of a neural network. |
+|             test |    20     | Data used to test the model after tuning to gauge performance on new data |
+
+- we just have three cost function to evaluate our model:
+  $$
+  \begin{align}
+  &J_{train}
+  \\
+  &J_{teest}
+  \\
+  &J_{cv}
+  \end{align}
+  $$
+
+- Its equation accordingly project to each model you choose.
+
+### (2) Model selecion 
+
+In reality,we can not choose right model for actual problem at once.
+
+It we want to automatically choose a model,we can use above cost funcion.
+
+- we can train many models and simultaneously compute  $J_{cv}$   that cross-validation cost.
+- we choose the minimum of $J_{cv}$ to be our model and then cmpute $J_{test}$.
+- training and cross-validation set help our to choose model, test set($J_{test}$) help our model to have a good generaliztion.
+
+### (3) Bais and Variance
+
+- 1. High bias (underfit):
+
+$$
+\begin{align}
+&J_{train} & is \space high
+\\
+&J_{cv}  &is \space high
+\\
+&J_{train}\approx J_{cv} 
+\end{align}
+$$
+
+- 2. High variance (overfit):
+
+  $$
+  \begin{align}
+  &J_{train} &is \space \space low
+  \\
+  &J_{cv}  &is \space high
+  \\
+  &J_{train}>> J_{cv} 
+  \end{align}
+  $$
+
+- 3. "Right":
+
+  $$
+  \begin{align}
+  &J_{train} &is \space low
+  \\
+  &J_{cv}  &is \space low
   
+  \end{align}
+  $$
+
+- 4. High bias and high variance:
+
+  $$
+  \begin{align}
+  &J_{train} &is \space high
+  \\
+  &J_{cv}  &is \space high
+  \\
+  &J_{cv}>> J_{train}
+  \end{align}
+  $$
+
+- 
+
+### (4) Learning curve
+
+- If our model is "High bias":
+  - Adding more data can not minimize error
+  - Maybe we should change our model or other methood
+  - Try getting additional features
+  - Try adding polynomial features
+  - Try decreasing $\lambda$
+  
+- If our model is "High variance":
+  - Aading more data is indeed likely to help
+  - Try smaller sets of teatures (similar to Regluarzation)
+  - Try increasing $\lambda$
+
+
 
 
 
@@ -1085,4 +1194,78 @@ $$
 
 # 2. Unsuperised learning
 
- 	
+ ## 2.1 K_means 	
+
+聚类算法追求“簇内差异小，簇外差异大”。而这个“差异“由我们自己衡量，一般有如下标准：
+$$
+\begin{align}
+欧氏距离：&d(x,u)=\sqrt{\sum_{i=1}^1(x_i - \mu_i)^2}
+\\
+曼哈顿距离：&d(x,u)=\sum_{i=1}^n(|x_i-\mu_i|)
+\\
+余弦距离：&cos\theta=\frac{\sum_i^ n(x_i *\mu)}{\sqrt{\sum_1^n(x_i)^2}*\sqrt{\sum_1^n(\mu)^2}}
+\end{align}
+$$
+
+### (1) 流程
+
+我们用欧式距离来演示K_means算法, 具体流程如下：
+
+1. 选择K个随机点作为聚类中心 (**cluster centroids**)
+2. 遍历数据集中的每个数据，算出每个数据到K个点的距离，将该点和距离最近的聚类中心聚成一类
+3. 计算出K个类别，每一类包含的数据点的均值，将该类的聚类中心点移动至均值所在的位置。这便是一次迭代过程
+4. 重复2~3，直至K个聚类中心都停止移动，完成迭代
+
+### (2) 数学定义
+
+$$
+\begin{align}
+&Randomly \space initialize \space K \space cluster \space centroids \space \mu_1,\mu_2...,\mu_k \in \R
+\\
+&Repeat \{
+\\
+&for \space i =1 \space to \space m
+\\&c^{(i)}:index(from \space 1 \space to \space K)of \space cluster centroids \space closet \space to \space x^{(i)}
+\\
+&for \space k = 1 \space to K
+\\
+&\mu_k:=average(mean)of \space point \space assigned \space to \space 	cluster \space k
+\\
+&\}
+
+\end{align}
+$$
+
+其中,$\mu_1,\mu2...\mu_k$表示K个聚类中心位置。
+
+$c^{(i)}$表示第$i$个样本到K个聚类中心得最小距离，即：
+$$
+c^{(i)}=min_k||x^{(i)}-\mu_k||^2
+$$
+
+### (3) Cost Function ( **Distortion function** 畸变函数)
+
+$$
+J(c^{(1)}...,c^{(m)},\mu_1,...,\mu_k)=\frac{1}{m}\sum_{i=1}^{m}||X^{(i)}-\mu_{(c^{(i)})}||^2
+$$
+
+其中$\mu_{c^{(i)}}$ 表示 $x^{(i)}$ 最近的聚类中心点。
+
+### (4) Potential problem
+
+因为采用了随机模式的不同的初始化聚类中心,可能只能收敛到局部最优解，而没达到全局最优，
+
+- 方法：
+
+  为了解决这个问题，我们通常需要多次运行 K-均值算法，每一次都重新进行随机初始化，最后再比较多次运行 K-均值的结果，选择代价函数最小的结果。这种方法在K较小的时候还是可行的，但是如果K较大，这么做也可能不会有明显地改善。
+
+### (5) K choose
+
+一般都是人工选择，但也有一个方法：“**肘部法则**”：
+
+![img](./Machine_Learning.assets/K_value.png)
+
+我们可能会得到一条类似于这样的曲线。 像一个人的肘部。 这就是“肘部法则”所做的，让我们来看这样一个图，看起来就好像有一个很清楚的肘在那儿。好像人的手臂，如果你伸出你的胳膊， 那么这就是你的肩关节、 肘关节、 手。 这就是“肘部法则”。 你会发现这种模式，它的畸变值会迅速下降，从 1 到 2，从 2 到 3 之后，你会在 3 的时候达到一个肘点。在此之后，畸变值就下降的非常慢，看起来就像使用 3 个聚类来进行聚类是正确的，这是因为那个点是曲线的肘点，畸变值下降得很快。
+
+
+
